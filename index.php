@@ -4,7 +4,7 @@ require_once 'config/database.php';
 require_once 'includes/auth.php';
 
 if (isLoggedIn()) {
-    header('Location: dashboard.php');
+    header('Location: config/dashboard.php');
     exit;
 }
 
