@@ -1,13 +1,16 @@
 <?php
-$host = 'localhost';
-$dbname = 'conectatech';
-$username = 'root';
-$password = '';
+$servidor = "localhost";
+$usuario = "root";
+$senha = "";
+$banco = "conectatech";
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $conn = new PDO("mysql:host=$servidor;dbname=$banco;charset=utf8", $usuario, $senha, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false
+    ]);
 } catch (PDOException $e) {
-    die("Could not connect to the database $dbname :" . $e->getMessage());
+    die("Falha na conexão: " . $e->getMessage());
 }
 ?>
