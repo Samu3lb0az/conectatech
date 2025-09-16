@@ -17,12 +17,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        // Verificar a senha
         if (password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['email'] = $user['email'];
-            header("Location: php/pagina_inicial.php");
-            exit();
+            $login_success = true;
         } else {
             $error = "Senha incorreta.";
         }
@@ -37,19 +35,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <html lang="en">
 
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="css/style.css">
-        <title>Login - Vibe</title>
+           <meta charset="UTF-8">
+           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+           <link rel="stylesheet" href="assets/css/style.css">
+           <title>Login - Vibe</title>
+           <!-- SweetAlert2 -->
+           <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     </head>
 
     <body class="login-body">
+
+            <?php if (!empty($login_success)): ?>
+                <script>
+                    Swal.fire({
+                        title: 'Logado com sucesso!',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.href = 'php/pagina_inicial.php';
+                    });
+                </script>
+            <?php endif; ?>
 
         <div class="container">
             <div class="logo-login">
                 <img src="assets/img/vibe-logo.png" alt="">
             </div>
-            <form class="fomulário-de-login" action="php/login.php" method="POST">
+            <form class="fomulário-de-login" action="" method="POST">
                 <label class="label-login" for="email">Email:</label>
                 <input class="campos-login" type="email" id="email" name="email" required>
 

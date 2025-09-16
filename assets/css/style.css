@@ -1,3 +1,198 @@
+.post-comments {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+.input-comment {
+    width: 70%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #eaeaea;
+    font-size: 15px;
+    margin-right: 8px;
+    box-sizing: border-box;
+}
+.btn-comment {
+    background: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-comment:hover {
+    background: #217dbb;
+}
+.comments-list {
+    margin-top: 10px;
+}
+.comment {
+    background: #f9f9f9;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    font-size: 15px;
+}
+.bemvindo-efeito {
+    width: 100%;
+    text-align: center;
+    margin-top: 48px;
+    margin-bottom: -24px;
+    padding: 32px 0 24px 0;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+}
+.titulo-home-efeito {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 2px 16px rgba(44,62,80,0.18);
+    letter-spacing: 1px;
+}
+.add-post-btn {
+    position: fixed;
+    right: 32px;
+    bottom: 32px;
+    width: 64px;
+    height: 64px;
+    background: none;
+    border: none;
+    outline: none;
+    z-index: 999;
+    cursor: pointer;
+    transition: transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.add-post-btn:hover {
+    transform: scale(1.08);
+}
+
+.modal-post {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(44,62,80,0.35);
+    justify-content: center;
+    align-items: center;
+}
+.modal-content-post {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px 24px 24px 24px;
+    box-shadow: 0 8px 32px rgba(95,47,234,0.12);
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    justify-content: center;
+    align-items: stretch;
+}
+.modal-content-post h2 {
+    color: #5F2FEA;
+    margin-bottom: 8px;
+    text-align: center;
+}
+.modal-content-post textarea,
+.modal-content-post input[type="file"],
+.modal-content-post input[type="text"] {
+    width: 100%;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid #eaeaea;
+    padding: 10px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+.btn-modal-post {
+    background: #5F2FEA;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 0;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+    transition: background 0.2s;
+}
+.btn-modal-post:hover {
+    background: #4520b6;
+}
+.close-modal-post {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 28px;
+    color: #5F2FEA;
+    cursor: pointer;
+    font-weight: bold;
+}
+.close-modal-post {
+    position: absolute;
+    .modal-content-post {
+        background: #fff;
+        border-radius: 16px;
+        padding: 32px 24px 24px 24px;
+        box-shadow: 0 8px 32px rgba(95,47,234,0.12);
+        min-width: 320px;
+        max-width: 90vw;
+        width: 400px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        justify-content: center;
+        align-items: center;
+    }
+    right: 20px;
+    font-size: 28px;
+    color: #5F2FEA;
+    cursor: pointer;
+    font-weight: bold;
+}
+.modal-content-post h2 {
+    color: #5F2FEA;
+    margin-bottom: 8px;
+    text-align: center;
+}
+.modal-content-post textarea {
+    width: 100%;
+    min-height: 80px;
+    border-radius: 8px;
+    border: 1px solid #eaeaea;
+    padding: 10px;
+    font-size: 16px;
+    resize: vertical;
+    margin-bottom: 10px;
+}
+.modal-content-post input[type="file"] {
+    margin-bottom: 12px;
+}
+.btn-modal-post {
+    background: #5F2FEA;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 0;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+    transition: background 0.2s;
+}
+.btn-modal-post:hover {
+    background: #4520b6;
+}
 :root {
     --primary-color: #3498db;
     --secondary-color: #2ecc71;
@@ -22,17 +217,19 @@ body {
     line-height: 1.6;
 }
 
+
+/* Container do login/cadastro */
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
+    width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Header */
 header {
-    background-color: var(--white);
-    box-shadow: var(--shadow);
-    padding: 15px 0;
     position: sticky;
     top: 0;
     z-index: 100;
@@ -40,6 +237,7 @@ header {
 
 .header-content {
     display: flex;
+    width: 90%;
     justify-content: space-between;
     align-items: center;
 }
@@ -400,6 +598,90 @@ nav ul li a:hover {
     border: none;
     border-radius: 20px;
     cursor: pointer;
+}
+
+/* Login */
+
+
+/* Página Inicial Exclusiva */
+.home-body {
+    min-height: 100vh;
+    background: linear-gradient(120deg, #252525 0%, #5F2FEA 60%, #DB38B1 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.home-container {
+    max-width: 900px;
+    margin: 50px auto 0 auto;
+    padding: 30px 25px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(95,47,234,0.08);
+}
+
+.voltar-login{
+    background-color: transparent;
+    border: none;
+    color: #5F2FEA;
+    font-size: 16px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.login-body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(#252525, #5F2FEA, #DB38B1);
+}
+
+.fomulário-de-login{
+    display: flex;
+    flex-direction: column;
+}
+
+.label-login{
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.cadastrar{
+    margin-top: 10px;
+    font-size: 14px;
+    text-decoration: none;
+    color: #5F2FEA;
+    text-align: center;
+}
+
+.button-login{
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #5F2FEA;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.campos-login{
+    padding: 7px !important;
+    border: none !important;
+    border-radius: 5px !important;
+    background-color: #eaeaea;
+}
+
+.logo-login{
+    display: flex;
+    height: 100px;
+    justify-content: center;
+}
+
+.titulo-home{
+    color:#5F2FEA;
+    text-align:center;
+    margin-bottom:20px;
 }
 
 /* Responsividade */

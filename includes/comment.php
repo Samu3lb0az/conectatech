@@ -4,7 +4,7 @@ require_once '../config/database.php';
 require_once 'auth.php';
 
 if (!isLoggedIn()) {
-    echo json_encode(['success' => false, 'error' => 'Não autenticado']);
+    header("Location: ../index.php");
     exit;
 }
 
@@ -16,19 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($comment)) {
         $stmt = $conn->prepare("INSERT INTO comments (user_id, post_id, comment) VALUES (?, ?, ?)");
         $stmt->execute([$user_id, $post_id, $comment]);
-        
-        // Obter informações do usuário para retornar
-        $stmt = $conn->prepare("SELECT full_name FROM users WHERE id = ?");
-        $stmt->execute([$user_id]);
-        $user = $stmt->fetch();
-        
-        echo json_encode([
-            'success' => true,
-            'userName' => $user['full_name'],
-            'comment' => $comment
-        ]);
-    } else {
-        echo json_encode(['success' => false, 'error' => 'Comentário vazio']);
     }
 }
-?>
+
+// Sempre redireciona de volta para a página inicial
+header("Location: ../php/pagina_inicial.php"); // ajuste o nome do arquivo da sua página inicial
+exit;
