@@ -1,65 +1,65 @@
 <?php
 session_start();
-require_once 'config/database.php';
-require_once 'includes/auth.php';
+include_once "config/database.php"; // Supondo que $conn seja uma instância PDO
 
-if (isLoggedIn()) {
-    header('Location: dashboard.php');
-    exit;
-}
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-$error = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+    $email = $_POST['email'];
     $password = $_POST['password'];
-    
-    if (loginUser($email, $password)) {
-        header('Location: dashboard.php');
-        exit;
+
+    // Preparar a query com parâmetro nomeado
+    $sql = "SELECT id, email, password FROM users WHERE email = :email";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+    $stmt->execute();
+
+    // Buscar o usuário
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($user) {
+        // Verificar a senha
+        if (password_verify($password, $user['password'])) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['email'] = $user['email'];
+            header("Location: php/pagina_inicial.php");
+            exit();
+        } else {
+            $error = "Senha incorreta.";
+        }
     } else {
-        $error = 'Email ou senha incorretos.';
+        $error = "Usuário não encontrado.";
     }
 }
+
 ?>
 
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ConectaTech - Login</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body class="auth-page">
-    <div class="auth-container">
-        <div class="auth-logo">
-            <h1>ConectaTech</h1>
-            <p>Conecte-se com seus colegas</p>
+<<!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="css/style.css">
+        <title>Login - Vibe</title>
+    </head>
+
+    <body class="login-body">
+
+        <div class="container">
+            <div class="logo-login">
+                <img src="assets/img/vibe-logo.png" alt="">
+            </div>
+            <form class="fomulário-de-login" action="php/login.php" method="POST">
+                <label class="label-login" for="email">Email:</label>
+                <input class="campos-login" type="email" id="email" name="email" required>
+
+                <label class="label-login" for="password">Senha:</label>
+                <input class="campos-login" type="password" id="password" name="password" required>
+
+                <button class="button-login" type="submit">Entrar</button>
+                <a class="cadastrar" href="php/cadastrar.php">Não possui uma conta? Cadastre-se</a>
+            </form>
         </div>
-        
-        <form method="POST" class="auth-form">
-            <h2>Login</h2>
-            
-            <?php if ($error): ?>
-                <div class="error-message"><?php echo $error; ?></div>
-            <?php endif; ?>
-            
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Senha</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            
-            <button type="submit" class="btn-primary">Entrar</button>
-            
-            <div class="auth-links">
-                <p>Não tem uma conta? <a href="register.php">Cadastre-se</a></p>
-            </div>
-        </form>
-    </div>
-</body>
-</html>
+    </body>
+
+    </html>
