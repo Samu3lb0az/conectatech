@@ -10,30 +10,68 @@ if (!isLoggedIn()) {
 
 $user_id = $_SESSION['user_id'];
 
+// --------------------
+// Upload de foto de perfil
+// --------------------
+if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === 0) {
+    $allowed_ext = ['jpg', 'jpeg', 'png', 'gif'];
+    $file_ext = strtolower(pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION));
+
+    if (in_array($file_ext, $allowed_ext)) {
+        $new_name = 'profile_' . $user_id . '.' . $file_ext;
+        $upload_dir = '../uploads/profiles/';
+
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+
+        $upload_path = $upload_dir . $new_name;
+        if (move_uploaded_file($_FILES['profile_pic']['tmp_name'], $upload_path)) {
+            $stmt = $conn->prepare("UPDATE users SET profile_pic = ? WHERE id = ?");
+            $stmt->execute([$new_name, $user_id]);
+        }
+    }
+}
+
+// --------------------
 // Buscar informações do usuário
+// --------------------
 $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
-$user = $stmt->fetch();
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+if (!$user) {
+    $user = [
+        'username' => 'Usuário Desconhecido',
+        'profile_pic' => 'default.png'
+    ];
+}
+
+// --------------------
 // Buscar posts do usuário
+// --------------------
 $stmt = $conn->prepare("SELECT * FROM posts WHERE user_id = ? ORDER BY created_at DESC");
 $stmt->execute([$user_id]);
-$posts = $stmt->fetchAll();
+$posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// --------------------
 // Buscar estatísticas
+// --------------------
 $stmt = $conn->prepare("SELECT COUNT(*) as post_count FROM posts WHERE user_id = ?");
 $stmt->execute([$user_id]);
-$post_count = $stmt->fetch()['post_count'];
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$post_count = $result ? $result['post_count'] : 0;
 
 $stmt = $conn->prepare("SELECT COUNT(*) as follower_count FROM followers WHERE following_id = ?");
 $stmt->execute([$user_id]);
-$follower_count = $stmt->fetch()['follower_count'];
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$follower_count = $result ? $result['follower_count'] : 0;
 
 $stmt = $conn->prepare("SELECT COUNT(*) as following_count FROM followers WHERE follower_id = ?");
 $stmt->execute([$user_id]);
-$following_count = $stmt->fetch()['following_count'];
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$following_count = $result ? $result['following_count'] : 0;
 ?>
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -41,13 +79,13 @@ $following_count = $stmt->fetch()['following_count'];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ConectaTech - Perfil</title>
     <style>
-        *{
+        * {
             padding: 0;
             margin: 0;
             box-sizing: border-box;
         }
 
-        body{
+        body {
             font-family: Arial, Helvetica, sans-serif;
             background-color: #252525;
             color: white;
@@ -73,7 +111,7 @@ $following_count = $stmt->fetch()['following_count'];
             flex-direction: column;
             justify-content: center;
         }
-        
+
         .sidebar nav ul li {
             margin: 15px 0;
         }
@@ -99,10 +137,9 @@ $following_count = $stmt->fetch()['following_count'];
         .profile-header {
             display: flex;
             align-items: center;
-            padding: 40px 0;
+            padding: 20px;
             background: linear-gradient(to right, #252525, #5F2FEA, #DB38B5);
             border-radius: 10px;
-            padding: 20px;
             margin-bottom: 30px;
         }
 
@@ -120,6 +157,21 @@ $following_count = $stmt->fetch()['following_count'];
             font-size: 14px;
             text-align: center;
             border: 3px solid white;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .profile-pic-lg img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        #foto-perfil {
+            margin-bottom: 10px;
+            color: #DB38B5;
+            text-decoration: none;
         }
 
         .profile-info {
@@ -130,11 +182,6 @@ $following_count = $stmt->fetch()['following_count'];
             font-size: 28px;
             margin-bottom: 5px;
             color: white;
-        }
-
-        .profile-info p {
-            margin-bottom: 10px;
-            color: #ccc;
         }
 
         .bio {
@@ -186,6 +233,13 @@ $following_count = $stmt->fetch()['following_count'];
             font-weight: bold;
         }
 
+        .profile-post img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
         .post-overlay {
             position: absolute;
             top: 0;
@@ -226,31 +280,31 @@ $following_count = $stmt->fetch()['following_count'];
                 border-right: none;
                 border-bottom: white 1px solid;
             }
-            
+
             .sidebar nav ul {
                 flex-direction: row;
                 justify-content: space-around;
                 flex-wrap: wrap;
             }
-            
+
             .main-content {
                 margin-left: 0;
             }
-            
+
             .profile-header {
                 flex-direction: column;
                 text-align: center;
             }
-            
+
             .profile-pic-lg {
                 margin-right: 0;
                 margin-bottom: 20px;
             }
-            
+
             .profile-stats {
                 justify-content: center;
             }
-            
+
             .profile-posts {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -260,7 +314,7 @@ $following_count = $stmt->fetch()['following_count'];
             .profile-posts {
                 grid-template-columns: 1fr;
             }
-            
+
             .sidebar nav ul li {
                 margin: 5px;
             }
@@ -278,15 +332,22 @@ $following_count = $stmt->fetch()['following_count'];
             </ul>
         </nav>
     </div>
-    
+
     <div class="main-content">
         <div class="profile-header">
-            <div class="profile-pic-lg">Foto de Perfil</div>
+            <div class="profile-pic-lg">
+                <?php if (!empty($user['profile_pic']) && file_exists('../uploads/profiles/' . $user['profile_pic'])): ?>
+                    <img src="../uploads/profiles/<?php echo $user['profile_pic']; ?>" alt="Foto de Perfil">
+                <?php else: ?>
+                    <a id="foto-perfil" href="javascript:void(0)">Foto de Perfil</a>
+                <?php endif; ?>
+            </div>
+
             <div class="profile-info">
-                <h1><?php echo $user['full_name']; ?></h1>
-                <p>@<?php echo $user['full_name']; ?></p>
-                <p class="bio"><?php echo $user['bio']; ?></p>
-                
+                <h1><?php echo htmlspecialchars($user['name'] ?? 'Usuário'); ?></h1>
+                <p>@<?php echo htmlspecialchars($user['name'] ?? 'usuario'); ?></p>
+                <p class="bio"><?php echo htmlspecialchars($user['bio'] ?? ''); ?></p>
+
                 <div class="profile-stats">
                     <div class="stat">
                         <strong><?php echo $post_count; ?></strong>
@@ -303,7 +364,7 @@ $following_count = $stmt->fetch()['following_count'];
                 </div>
             </div>
         </div>
-        
+
         <div class="profile-posts">
             <?php if (empty($posts)): ?>
                 <div class="empty-state">
@@ -313,7 +374,11 @@ $following_count = $stmt->fetch()['following_count'];
             <?php else: ?>
                 <?php foreach ($posts as $post): ?>
                     <div class="profile-post">
-                        Post #<?php echo $post['id']; ?>
+                        <?php if (!empty($post['image']) && file_exists('../uploads/posts/' . $post['image'])): ?>
+                            <img src="../uploads/posts/<?php echo htmlspecialchars($post['image']); ?>" alt="Post">
+                        <?php else: ?>
+                            <span>Sem imagem</span>
+                        <?php endif; ?>
                         <div class="post-overlay">
                             <span class="likes">❤️ <?php echo rand(10, 100); ?></span>
                             <span class="comments">💬 <?php echo rand(1, 20); ?></span>
@@ -323,5 +388,23 @@ $following_count = $stmt->fetch()['following_count'];
             <?php endif; ?>
         </div>
     </div>
+
+    <!-- Input escondido para upload -->
+    <form id="uploadForm" method="POST" enctype="multipart/form-data">
+        <input type="file" id="fileInput" name="profile_pic" accept="image/*">
+    </form>
+
+    <script>
+        const profilePic = document.querySelector(".profile-pic-lg");
+        const fileInput = document.getElementById("fileInput");
+
+        profilePic.addEventListener("click", () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener("change", () => {
+            document.getElementById("uploadForm").submit();
+        });
+    </script>
 </body>
 </html>
