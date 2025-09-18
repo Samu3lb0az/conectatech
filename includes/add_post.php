@@ -15,15 +15,10 @@ $descricao = isset($_POST['descricao']) ? trim($_POST['descricao']) : null;
 
 $imagem = null;
 if (isset($_FILES['imagem']) && $_FILES['imagem']['error'] === UPLOAD_ERR_OK) {
-    $ext = pathinfo($_FILES['imagem']['name'], PATHINFO_EXTENSION);
-    $nome_arquivo = uniqid('post_', true) . '.' . $ext;
-    $caminho = '../assets/img/posts/' . $nome_arquivo;
-    if (!is_dir('../assets/img/posts')) {
-        mkdir('../assets/img/posts', 0777, true);
-    }
-    if (move_uploaded_file($_FILES['imagem']['tmp_name'], $caminho)) {
-        $imagem = '../assets/img/posts/' . $nome_arquivo;
-    }
+    // Lê o conteúdo binário da imagem
+    $imagem = file_get_contents($_FILES['imagem']['tmp_name']);
+    $mime = mime_content_type($_FILES['imagem']['tmp_name']); // ex: image/png ou image/jpeg
+
 }
 
 if (empty($conteudo) && empty($imagem)) {
@@ -31,11 +26,13 @@ if (empty($conteudo) && empty($imagem)) {
     exit();
 }
 
-$sql = "INSERT INTO posts (user_id, conteudo, imagem, descricao, created_at) VALUES (:user_id, :conteudo, :imagem, :descricao, NOW())";
+$sql = "INSERT INTO posts (user_id, conteudo, imagem, mime_type, descricao, created_at) 
+        VALUES (:user_id, :conteudo, :imagem, :mime, :descricao, NOW())";
 $stmt = $conn->prepare($sql);
 $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+$stmt->bindParam(':mime', $mime, PDO::PARAM_STR);
 $stmt->bindParam(':conteudo', $conteudo, PDO::PARAM_STR);
-$stmt->bindParam(':imagem', $imagem, PDO::PARAM_STR);
+$stmt->bindParam(':imagem', $imagem, PDO::PARAM_LOB);
 $stmt->bindParam(':descricao', $descricao, PDO::PARAM_STR);
 
 if ($stmt->execute()) {
@@ -48,3 +45,4 @@ if ($stmt->execute()) {
         'pdo_error' => $errorInfo
     ]);
 }
+?>
