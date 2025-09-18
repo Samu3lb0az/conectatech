@@ -533,8 +533,9 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s;
+    display: block;
 }
+
 
 .profile-post:hover img {
     transform: scale(1.05);
