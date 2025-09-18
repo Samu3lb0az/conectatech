@@ -178,6 +178,11 @@
 .modal-content-post input[type="file"] {
     margin-bottom: 12px;
 }
+
+.like-btn.liked .heart-icon {
+    color: red;
+}
+
 .btn-modal-post {
     background: #5F2FEA;
     color: #fff;
