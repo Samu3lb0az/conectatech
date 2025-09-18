@@ -80,7 +80,8 @@ if (!isset($_SESSION['user_id'])) {
                             </div>
                             <?php if (!empty($post['imagem'])): ?>
                                 <div class="post-image">
-                                    <img src="<?php echo htmlspecialchars($post['imagem']); ?>" alt="Post">
+                                    <img src="data:<?php echo htmlspecialchars($post['mime_type']); ?>;base64,<?php echo base64_encode($post['imagem']); ?>"
+                                        alt="Post">
                                 </div>
                             <?php endif; ?>
                             <div class="post-caption">
@@ -93,7 +94,7 @@ if (!isset($_SESSION['user_id'])) {
                             </div>
                             <div class="post-actions">
                                 <button class="like-btn"><span class="heart-icon">&#10084;</span> Curtir</button>
-                               
+
                             </div>
                             <div class="post-comments">
                                 <form action="../includes/comment.php" method="POST">
