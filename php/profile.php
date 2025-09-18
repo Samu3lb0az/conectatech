@@ -10,68 +10,88 @@ if (!isLoggedIn()) {
 
 $user_id = $_SESSION['user_id'];
 
-// --------------------
-// Upload de foto de perfil
-// --------------------
-if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === 0) {
-    $allowed_ext = ['jpg', 'jpeg', 'png', 'gif'];
-    $file_ext = strtolower(pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION));
-
-    if (in_array($file_ext, $allowed_ext)) {
-        $new_name = 'profile_' . $user_id . '.' . $file_ext;
-        $upload_dir = '../uploads/profiles/';
-
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
+// Processar upload de foto de perfil
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_picture'])) {
+    $target_dir = "../uploads/profiles/";
+    if (!file_exists($target_dir)) {
+        mkdir($target_dir, 0777, true);
+    }
+    
+    $file_extension = pathinfo($_FILES["profile_picture"]["name"], PATHINFO_EXTENSION);
+    $new_filename = "profile_" . $user_id . "_" . time() . "." . $file_extension;
+    $target_file = $target_dir . $new_filename;
+    
+    // Verificar se é uma imagem real
+    $check = getimagesize($_FILES["profile_picture"]["tmp_name"]);
+    if ($check !== false) {
+        // Limitar o tamanho do arquivo (5MB)
+        if ($_FILES["profile_picture"]["size"] > 5000000) {
+            $upload_error = "Arquivo muito grande. Tamanho máximo: 5MB.";
+        } else {
+            // Permitir apenas certos formatos
+            $allowed_extensions = array("jpg", "jpeg", "png", "gif");
+            if (in_array(strtolower($file_extension), $allowed_extensions)) {
+                if (move_uploaded_file($_FILES["profile_picture"]["tmp_name"], $target_file)) {
+                    // Atualizar no banco de dados
+                    $stmt = $conn->prepare("UPDATE users SET profile_picture = ? WHERE id = ?");
+                    if ($stmt->execute([$new_filename, $user_id])) {
+                        $upload_success = "Foto de perfil atualizada com sucesso!";
+                    } else {
+                        $upload_error = "Erro ao atualizar no banco de dados.";
+                    }
+                } else {
+                    $upload_error = "Erro ao fazer upload do arquivo.";
+                }
+            } else {
+                $upload_error = "Apenas arquivos JPG, JPEG, PNG e GIF são permitidos.";
+            }
         }
-
-        $upload_path = $upload_dir . $new_name;
-        if (move_uploaded_file($_FILES['profile_pic']['tmp_name'], $upload_path)) {
-            $stmt = $conn->prepare("UPDATE users SET profile_pic = ? WHERE id = ?");
-            $stmt->execute([$new_name, $user_id]);
-        }
+    } else {
+        $upload_error = "O arquivo não é uma imagem válida.";
     }
 }
 
-// --------------------
 // Buscar informações do usuário
-// --------------------
 $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+$user = $stmt->fetch();
 
-if (!$user) {
-    $user = [
-        'username' => 'Usuário Desconhecido',
-        'profile_pic' => 'default.png'
-    ];
-}
-
-// --------------------
 // Buscar posts do usuário
-// --------------------
 $stmt = $conn->prepare("SELECT * FROM posts WHERE user_id = ? ORDER BY created_at DESC");
 $stmt->execute([$user_id]);
-$posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$posts = $stmt->fetchAll();
 
-// --------------------
 // Buscar estatísticas
-// --------------------
 $stmt = $conn->prepare("SELECT COUNT(*) as post_count FROM posts WHERE user_id = ?");
 $stmt->execute([$user_id]);
-$result = $stmt->fetch(PDO::FETCH_ASSOC);
-$post_count = $result ? $result['post_count'] : 0;
+$post_count = $stmt->fetch()['post_count'];
 
 $stmt = $conn->prepare("SELECT COUNT(*) as follower_count FROM followers WHERE following_id = ?");
 $stmt->execute([$user_id]);
-$result = $stmt->fetch(PDO::FETCH_ASSOC);
-$follower_count = $result ? $result['follower_count'] : 0;
+$follower_count = $stmt->fetch()['follower_count'];
 
 $stmt = $conn->prepare("SELECT COUNT(*) as following_count FROM followers WHERE follower_id = ?");
 $stmt->execute([$user_id]);
-$result = $stmt->fetch(PDO::FETCH_ASSOC);
-$following_count = $result ? $result['following_count'] : 0;
+$following_count = $stmt->fetch()['following_count'];
+
+// Função para formatar a data
+function formatDate($date) {
+    $timestamp = strtotime($date);
+    $now = time();
+    $diff = $now - $timestamp;
+    
+    if ($diff < 60) {
+        return 'Agora mesmo';
+    } elseif ($diff < 3600) {
+        return floor($diff / 60) . ' min atrás';
+    } elseif ($diff < 86400) {
+        return floor($diff / 3600) . ' h atrás';
+    } else {
+        return date('d/m/Y', $timestamp);
+    }
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -79,13 +99,13 @@ $following_count = $result ? $result['following_count'] : 0;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ConectaTech - Perfil</title>
     <style>
-        * {
+        *{
             padding: 0;
             margin: 0;
             box-sizing: border-box;
         }
 
-        body {
+        body{
             font-family: Arial, Helvetica, sans-serif;
             background-color: #252525;
             color: white;
@@ -111,7 +131,7 @@ $following_count = $result ? $result['following_count'] : 0;
             flex-direction: column;
             justify-content: center;
         }
-
+        
         .sidebar nav ul li {
             margin: 15px 0;
         }
@@ -137,10 +157,17 @@ $following_count = $result ? $result['following_count'] : 0;
         .profile-header {
             display: flex;
             align-items: center;
-            padding: 20px;
+            padding: 40px 0;
             background: linear-gradient(to right, #252525, #5F2FEA, #DB38B5);
             border-radius: 10px;
+            padding: 20px;
             margin-bottom: 30px;
+        }
+
+        .profile-pic-container {
+            position: relative;
+            margin-right: 40px;
+            cursor: pointer;
         }
 
         .profile-pic-lg {
@@ -148,7 +175,6 @@ $following_count = $result ? $result['following_count'] : 0;
             height: 150px;
             border-radius: 50%;
             object-fit: cover;
-            margin-right: 40px;
             background-color: #ddd;
             display: flex;
             align-items: center;
@@ -157,21 +183,33 @@ $following_count = $result ? $result['following_count'] : 0;
             font-size: 14px;
             text-align: center;
             border: 3px solid white;
-            cursor: pointer;
-            overflow: hidden;
+            transition: opacity 0.3s;
         }
 
-        .profile-pic-lg img {
+        .profile-pic-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
+            background: rgba(0, 0, 0, 0.5);
             border-radius: 50%;
-            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            color: white;
+            font-size: 14px;
+            text-align: center;
         }
 
-        #foto-perfil {
-            margin-bottom: 10px;
-            color: #DB38B5;
-            text-decoration: none;
+        .profile-pic-container:hover .profile-pic-overlay {
+            opacity: 1;
+        }
+
+        .profile-pic-container:hover .profile-pic-lg {
+            opacity: 0.8;
         }
 
         .profile-info {
@@ -182,6 +220,11 @@ $following_count = $result ? $result['following_count'] : 0;
             font-size: 28px;
             margin-bottom: 5px;
             color: white;
+        }
+
+        .profile-info p {
+            margin-bottom: 10px;
+            color: #ccc;
         }
 
         .bio {
@@ -233,11 +276,16 @@ $following_count = $result ? $result['following_count'] : 0;
             font-weight: bold;
         }
 
-        .profile-post img {
+        .post-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            display: block;
+        }
+
+        .post-text {
+            padding: 15px;
+            text-align: center;
+            word-break: break-word;
         }
 
         .post-overlay {
@@ -246,17 +294,30 @@ $following_count = $result ? $result['following_count'] : 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.7);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             opacity: 0;
             transition: opacity 0.3s;
             color: white;
+            padding: 15px;
+            text-align: center;
         }
 
         .profile-post:hover .post-overlay {
             opacity: 1;
+        }
+
+        .post-content {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .post-date {
+            font-size: 12px;
+            color: #ccc;
         }
 
         .likes, .comments {
@@ -271,6 +332,74 @@ $following_count = $result ? $result['following_count'] : 0;
             color: #ccc;
         }
 
+        /* Modal de upload */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #333;
+            padding: 30px;
+            border-radius: 10px;
+            width: 400px;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #5F2FEA, #DB38B5);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #666;
+            color: white;
+        }
+
+        .alert {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .alert-success {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .alert-error {
+            background-color: #f44336;
+            color: white;
+        }
+
         /* Responsividade */
         @media (max-width: 768px) {
             .sidebar {
@@ -280,31 +409,31 @@ $following_count = $result ? $result['following_count'] : 0;
                 border-right: none;
                 border-bottom: white 1px solid;
             }
-
+            
             .sidebar nav ul {
                 flex-direction: row;
                 justify-content: space-around;
                 flex-wrap: wrap;
             }
-
+            
             .main-content {
                 margin-left: 0;
             }
-
+            
             .profile-header {
                 flex-direction: column;
                 text-align: center;
             }
-
-            .profile-pic-lg {
+            
+            .profile-pic-container {
                 margin-right: 0;
                 margin-bottom: 20px;
             }
-
+            
             .profile-stats {
                 justify-content: center;
             }
-
+            
             .profile-posts {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -314,7 +443,7 @@ $following_count = $result ? $result['following_count'] : 0;
             .profile-posts {
                 grid-template-columns: 1fr;
             }
-
+            
             .sidebar nav ul li {
                 margin: 5px;
             }
@@ -332,22 +461,33 @@ $following_count = $result ? $result['following_count'] : 0;
             </ul>
         </nav>
     </div>
-
+    
     <div class="main-content">
+        <!-- Mensagens de sucesso/erro -->
+        <?php if (isset($upload_success)): ?>
+            <div class="alert alert-success"><?php echo $upload_success; ?></div>
+        <?php endif; ?>
+        
+        <?php if (isset($upload_error)): ?>
+            <div class="alert alert-error"><?php echo $upload_error; ?></div>
+        <?php endif; ?>
+        
         <div class="profile-header">
-            <div class="profile-pic-lg">
-                <?php if (!empty($user['profile_pic']) && file_exists('../uploads/profiles/' . $user['profile_pic'])): ?>
-                    <img src="../uploads/profiles/<?php echo $user['profile_pic']; ?>" alt="Foto de Perfil">
+            <div class="profile-pic-container" onclick="openModal()">
+                <?php if (!empty($user['profile_picture'])): ?>
+                    <img src="../uploads/profiles/<?php echo $user['profile_picture']; ?>" class="profile-pic-lg" alt="Foto de Perfil">
                 <?php else: ?>
-                    <a id="foto-perfil" href="javascript:void(0)">Foto de Perfil</a>
+                    <div class="profile-pic-lg">Clique para adicionar foto</div>
                 <?php endif; ?>
+                <div class="profile-pic-overlay">
+                    Alterar foto
+                </div>
             </div>
-
             <div class="profile-info">
-                <h1><?php echo htmlspecialchars($user['name'] ?? 'Usuário'); ?></h1>
-                <p>@<?php echo htmlspecialchars($user['name'] ?? 'usuario'); ?></p>
-                <p class="bio"><?php echo htmlspecialchars($user['bio'] ?? ''); ?></p>
-
+                <h1><?php echo $user['full_name']; ?></h1>
+                <p>@<?php echo $user['full_name']; ?></p>
+                <p class="bio"><?php echo $user['bio']; ?></p>
+                
                 <div class="profile-stats">
                     <div class="stat">
                         <strong><?php echo $post_count; ?></strong>
@@ -364,7 +504,7 @@ $following_count = $result ? $result['following_count'] : 0;
                 </div>
             </div>
         </div>
-
+        
         <div class="profile-posts">
             <?php if (empty($posts)): ?>
                 <div class="empty-state">
@@ -374,14 +514,32 @@ $following_count = $result ? $result['following_count'] : 0;
             <?php else: ?>
                 <?php foreach ($posts as $post): ?>
                     <div class="profile-post">
-                        <?php if (!empty($post['image']) && file_exists('../uploads/posts/' . $post['image'])): ?>
-                            <img src="../uploads/posts/<?php echo htmlspecialchars($post['image']); ?>" alt="Post">
+                        <?php if (!empty($post['imagem'])): ?>
+                            <img src="data:<?php echo $post['mime_type']; ?>;base64,<?php echo base64_encode($post['imagem']); ?>" 
+                                 class="post-image" 
+                                 alt="Post de <?php echo $user['full_name']; ?>">
                         <?php else: ?>
-                            <span>Sem imagem</span>
+                            <div class="post-text">
+                                <?php echo nl2br(htmlspecialchars($post['conteudo'])); ?>
+                            </div>
                         <?php endif; ?>
+                        
                         <div class="post-overlay">
-                            <span class="likes">❤️ <?php echo rand(10, 100); ?></span>
-                            <span class="comments">💬 <?php echo rand(1, 20); ?></span>
+                            <?php if (!empty($post['conteudo']) && !empty($post['imagem'])): ?>
+                                <div class="post-content">
+                                    <?php echo nl2br(htmlspecialchars($post['conteudo'])); ?>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <?php if (!empty($post['descricao'])): ?>
+                                <div class="post-content">
+                                    <em><?php echo htmlspecialchars($post['descricao']); ?></em>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <div class="post-date">
+                                <?php echo formatDate($post['created_at']); ?>
+                            </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -389,22 +547,36 @@ $following_count = $result ? $result['following_count'] : 0;
         </div>
     </div>
 
-    <!-- Input escondido para upload -->
-    <form id="uploadForm" method="POST" enctype="multipart/form-data">
-        <input type="file" id="fileInput" name="profile_pic" accept="image/*">
-    </form>
+    <!-- Modal para upload de foto -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <h2>Alterar foto de perfil</h2>
+            <form action="profile.php" method="post" enctype="multipart/form-data" id="uploadForm">
+                <input type="file" name="profile_picture" id="profilePictureInput" accept="image/*" style="display: none;" onchange="document.getElementById('uploadForm').submit()">
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('profilePictureInput').click()">Selecionar imagem</button>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
-        const profilePic = document.querySelector(".profile-pic-lg");
-        const fileInput = document.getElementById("fileInput");
-
-        profilePic.addEventListener("click", () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener("change", () => {
-            document.getElementById("uploadForm").submit();
-        });
+        function openModal() {
+            document.getElementById('uploadModal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+        }
+        
+        // Fechar modal clicando fora dele
+        window.onclick = function(event) {
+            const modal = document.getElementById('uploadModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
     </script>
 </body>
 </html>
