@@ -10,6 +10,19 @@ if (!isLoggedIn()) {
 
 $user_id = $_SESSION['user_id'];
 
+// Envio de mensagem por POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['receiver_id'], $_POST['message'])) {
+    $receiver_id = $_POST['receiver_id'];
+    $message = trim($_POST['message']);
+    if (!empty($message)) {
+        $stmt = $conn->prepare("INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)");
+        $stmt->execute([$user_id, $receiver_id, $message]);
+        // Redireciona para evitar reenvio do formulário
+        header('Location: chat.php?user_id=' . $receiver_id);
+        exit;
+    }
+}
+
 // Buscar usuários disponíveis para conversar
 $stmt = $conn->prepare("SELECT id, email, full_name FROM users WHERE id != ?");
 $stmt->execute([$user_id]);
@@ -350,34 +363,52 @@ if (isset($_GET['user_id'])) {
         <div class="chat-container">
             <div class="conversations-list">
                 <div class="conversations-header">
-                    Mensagens
+                    Usuários
                 </div>
-                <?php if (empty($conversations)): ?>
+                <?php if (empty($users)): ?>
                     <div style="padding: 20px; color: #777; text-align: center;">
-                        Nenhuma conversa ainda
+                        Nenhum usuário encontrado
                     </div>
                 <?php else: ?>
-                    <?php foreach ($conversations as $conversation): ?>
-                        <div class="conversation-item <?php echo ($selected_user && $selected_user['id'] == $conversation['id']) ? 'active' : ''; ?>" 
-                             onclick="window.location.href='chat.php?user_id=<?php echo $conversation['id']; ?>'">
+                    <?php foreach ($users as $u): ?>
+                        <div class="conversation-item <?php echo ($selected_user && $selected_user['id'] == $u['id']) ? 'active' : ''; ?>" 
+                             onclick="window.location.href='chat.php?user_id=<?php echo $u['id']; ?>'">
                             <div class="conversation-avatar">
-                                <?php echo strtoupper(substr($conversation['full_name'], 0, 1)); ?>
+                                <?php echo strtoupper(substr($u['full_name'], 0, 1)); ?>
                             </div>
                             <div class="conversation-info">
-                                <div class="conversation-name"><?php echo $conversation['full_name']; ?></div>
+                                <div class="conversation-name"><?php echo $u['full_name']; ?></div>
                                 <div class="conversation-preview">
-                                    <?php echo ($conversation['sender_id'] == $user_id ? 'Você: ' : '') . $conversation['message']; ?>
+                                    <?php 
+                                    // Mostra última mensagem se houver
+                                    $lastMsg = null;
+                                    foreach ($conversations as $conv) {
+                                        if ($conv['id'] == $u['id']) {
+                                            $lastMsg = $conv;
+                                            break;
+                                        }
+                                    }
+                                    if ($lastMsg) {
+                                        echo ($lastMsg['sender_id'] == $user_id ? 'Você: ' : '') . $lastMsg['message'];
+                                    } else {
+                                        echo 'Clique para conversar';
+                                    }
+                                    ?>
                                 </div>
                             </div>
                             <div class="conversation-time">
                                 <?php 
-                                    $time = strtotime($conversation['created_at']);
-                                    echo date('H:i', $time); 
+                                    if (isset($lastMsg['created_at'])) {
+                                        $time = strtotime($lastMsg['created_at']);
+                                        echo date('H:i', $time); 
+                                    }
                                 ?>
                             </div>
-                            <?php if ($conversation['unread'] > 0): ?>
-                                <div class="unread-badge"><?php echo $conversation['unread']; ?></div>
-                            <?php endif; ?>
+                            <?php 
+                                if ($lastMsg && $lastMsg['unread'] > 0) {
+                                    echo '<div class="unread-badge">' . $lastMsg['unread'] . '</div>';
+                                }
+                            ?>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -405,9 +436,9 @@ if (isset($_GET['user_id'])) {
                     </div>
                     
                     <div class="message-input-container">
-                        <form class="message-form" id="message-form">
+                        <form class="message-form" method="POST" action="">
                             <input type="hidden" name="receiver_id" value="<?php echo $selected_user['id']; ?>">
-                            <input type="text" class="message-input" name="message" placeholder="Digite uma mensagem..." required>
+                            <input type="text" class="message-input" name="message" placeholder="Digite uma mensagem..." required autocomplete="off">
                             <button type="submit" class="send-button">Enviar</button>
                         </form>
                     </div>
@@ -429,42 +460,7 @@ if (isset($_GET['user_id'])) {
                 container.scrollTop = container.scrollHeight;
             }
         }
-
-        // Rolar para o final quando a página carregar
         window.addEventListener('load', scrollToBottom);
-
-        // Enviar mensagem via AJAX
-        document.getElementById('message-form')?.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const messageInput = this.querySelector('input[name="message"]');
-            const message = messageInput.value.trim();
-            
-            if (message) {
-                fetch('includes/send_message.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Adicionar mensagem à interface
-                        const messagesContainer = document.getElementById('messages-container');
-                        const messageDiv = document.createElement('div');
-                        messageDiv.className = 'message sent';
-                        messageDiv.innerHTML = `
-                            <div class="message-text">${message}</div>
-                            <div class="message-time">Agora</div>
-                        `;
-                        messagesContainer.appendChild(messageDiv);
-                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                        messageInput.value = '';
-                    }
-                })
-                .catch(error => console.error('Erro ao enviar mensagem:', error));
-            }
-        });
     </script>
 </body>
 </html>
