@@ -86,6 +86,7 @@ if (isset($_GET['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/style.css">
     <title>ConectaTech - Chat</title>
     <style>
         * {
@@ -102,42 +103,6 @@ if (isset($_GET['user_id'])) {
             display: flex;
         }
 
-        .sidebar {
-            width: 200px;
-            height: 100%;
-            font-weight: bolder;
-            font-size: 22px;
-            background: linear-gradient(#252525, #5F2FEA, #DB38B5);
-            color: #fff;
-            padding: 15px;
-            border-right: white 1px solid;
-        }
-
-        .sidebar nav ul {
-            list-style: none;
-            height: 100%;
-            display: flex;
-            padding: 0;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .sidebar nav ul li {
-            margin: 15px 0;
-        }
-
-        .sidebar nav ul li a {
-            color: #fff;
-            text-decoration: none;
-            display: block;
-            padding: 10px;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
-
-        .sidebar nav ul li a:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
 
         .main-content {
             flex: 1;
@@ -348,16 +313,19 @@ if (isset($_GET['user_id'])) {
     </style>
 </head>
 <body>
-    <div class="sidebar">
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="../assets/img/vibe-logo.png" alt="Vibe Logo" style="height:40px; vertical-align:middle;">
+        </div>
         <nav>
             <ul>
                 <li><a href="pagina_inicial.php">Feed</a></li>
                 <li><a href="profile.php">Perfil</a></li>
-                <li><a href="#" style="background: rgba(255, 255, 255, 0.2);">Chat</a></li>
+                <li><a href="#">Chat</a></li>
                 <li><a href="logout.php">Sair</a></li>
             </ul>
         </nav>
-    </div>
+    </aside>
     
     <div class="main-content">
         <div class="chat-container">

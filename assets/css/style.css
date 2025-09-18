@@ -234,132 +234,86 @@ body {
 }
 
 /* Header */
-header {
-    position: sticky;
+/* Sidebar */
+/* ================== Sidebar ================== */
+.sidebar {
+    position: fixed;
     top: 0;
-    z-index: 100;
-}
-
-.header-content {
+    left: 0;
+    width: 220px;
+    height: 100%;
+    font-weight: bolder;
+    font-size: 22px;
+    background: linear-gradient(#252525, #5F2FEA, #DB38B5);
+    color: #fff;
+    padding: 20px;
+    border-right: 1px solid white;
     display: flex;
-    width: 90%;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: transform 0.3s ease;
+    z-index: 1000;
 }
 
-.logo {
+.main-feed {
+    display: flex;
+    justify-content: right;
+}
+
+.container-conteudo {
+    display: flex;
+    width: 80%;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: end;
+}
+
+.sidebar .logo {
+    margin-bottom: 50px;
     font-size: 24px;
-    font-weight: bold;
-    color: var(--primary-color);
-}
-
-nav ul {
+    text-align: center;
+    width: 100%;
+    background-color: white;
     display: flex;
-    list-style: none;
-}
-
-nav ul li {
-    margin-left: 20px;
-}
-
-nav ul li a {
-    text-decoration: none;
-    color: var(--dark-color);
-    font-weight: 500;
-    transition: color 0.3s;
-}
-
-nav ul li a:hover {
-    color: var(--primary-color);
-}
-
-/* Auth Pages */
-.auth-page {
-    display: flex;
-    justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    background-color: var(--light-color);
+    justify-content: center;
+    border-radius: 30px;
 }
 
-.auth-container {
-    background-color: var(--white);
-    border-radius: 10px;
-    box-shadow: var(--shadow);
-    padding: 30px;
-    width: 100%;
-    max-width: 400px;
+.sidebar nav ul {
+    list-style: none;
+    padding: 0;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
-.auth-logo {
-    text-align: center;
-    margin-bottom: 20px;
+.sidebar nav ul li {
+    margin: 15px 0;
 }
 
-.auth-logo h1 {
-    color: var(--primary-color);
-    margin-bottom: 5px;
-}
-
-.auth-form h2 {
-    margin-bottom: 20px;
-    text-align: center;
-    color: var(--dark-color);
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-.btn-primary {
-    width: 100%;
-    padding: 12px;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.btn-primary:hover {
-    background-color: #2980b9;
-}
-
-.auth-links {
-    margin-top: 15px;
-    text-align: center;
-}
-
-.auth-links a {
-    color: var(--primary-color);
+.sidebar nav ul li a {
+    color: #fff;
     text-decoration: none;
-}
-
-.error-message {
-    background-color: #ffecec;
-    color: var(--accent-color);
+    display: block;
     padding: 10px;
     border-radius: 5px;
-    margin-bottom: 15px;
+    transition: background 0.3s;
 }
 
-/* Feed */
+.sidebar nav ul li a:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* ================== Conteúdo principal ================== */
+.main-content {
+    margin-left: 220px;
+    padding: 20px;
+    transition: margin-left 0.3s ease;
+}
+
+/* ================== Feed ================== */
 .feed {
     max-width: 600px;
     margin: 30px auto;
@@ -426,10 +380,7 @@ nav ul li a:hover {
     color: var(--accent-color);
 }
 
-.post-caption {
-    padding: 0 15px 15px;
-}
-
+.post-caption,
 .post-comments {
     padding: 0 15px 15px;
 }
@@ -466,6 +417,75 @@ nav ul li a:hover {
     text-align: center;
     padding: 40px;
     color: var(--gray-color);
+}
+
+/* ================== Responsividade ================== */
+@media (max-width: 1024px) {
+    .main-content {
+        margin-left: 180px;
+    }
+
+    .sidebar {
+        width: 180px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Sidebar colapsável */
+    .sidebar {
+        transform: translateX(-100%);
+        position: fixed;
+        z-index: 1000;
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 15px;
+    }
+
+    .feed {
+        margin: 20px auto;
+        max-width: 100%;
+    }
+
+    .post-card {
+        margin-bottom: 20px;
+    }
+
+    .post-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .like-btn, .comment-btn {
+        margin-bottom: 10px;
+    }
+}
+
+/* Botão de toggle da sidebar */
+.sidebar-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background-color: #5F2FEA;
+    border: none;
+    color: white;
+    font-size: 24px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1100;
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .sidebar-toggle {
+        display: block;
+    }
 }
 
 /* Profile Page */
